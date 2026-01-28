@@ -1,0 +1,16 @@
+DEPLOY: Fix clearance endpoint session/term ID lookup
+Timestamp: 2025-01-08
+
+CRITICAL FIX: The /finance/clearance endpoint was not finding assigned fee items because:
+- StudentFeeAssignment saves with UUID keys: student_fee_assignments:{UUID}:{UUID}
+- Clearance endpoint was looking with NAME keys: student_fee_assignments:{2025/2026}:{First Term}
+
+SOLUTION: Convert session/term names to their database IDs before KV lookup
+- Look up session_id from sessions table using session_name
+- Look up term_id from terms table using term_name  
+- Use these UUIDs to construct the correct KV key
+
+This will properly fetch:
+- Assigned fee items
+- Discount percentages from fee_item_discounts KV
+- Correct required_amount calculation

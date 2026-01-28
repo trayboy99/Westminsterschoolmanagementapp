@@ -1,0 +1,22 @@
+Deploy graduated students class name fix - FINAL VERSION
+
+This deployment includes comprehensive debugging and better error handling for the graduated students class name display issue.
+
+Changes made:
+1. Log raw graduated students data on fetch
+2. Log all graduation_class values with names and data types
+3. Log unique class IDs being fetched from classes table
+4. Log classes returned from database with any errors
+5. Log the final class ID to class name mapping
+6. Warn when a class ID has no corresponding class name
+7. Log sample transformed students showing the final mapping result
+8. Better null handling in transformation logic
+
+This will help identify why some students show class names (e.g., "SS3") correctly while others show UUIDs.
+
+Expected outcome after viewing logs:
+- If class IDs exist in classes table: mapping should work
+- If class IDs don't exist: we'll see warnings and can investigate why
+- If there's a data type mismatch: we'll see it in the type logging
+
+Deploy timestamp: 2025-12-08T00:15:00Z

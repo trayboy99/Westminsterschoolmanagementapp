@@ -1,0 +1,12 @@
+Deploy graduated students class name debugging
+
+This deployment adds enhanced logging to debug why class names are showing as UUIDs:
+- Log unique class IDs being fetched
+- Log classes returned from database
+- Log any errors fetching classes
+- Log the final class map
+- Log sample transformed student
+
+After deployment, check the logs when fetching graduated students to see where the mapping is failing.
+
+Timestamp: 2025-12-08T00:00:00Z

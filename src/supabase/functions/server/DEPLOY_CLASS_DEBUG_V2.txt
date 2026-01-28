@@ -1,0 +1,18 @@
+Deploy graduated students class name debugging - Version 2
+
+Enhanced logging to diagnose UUID vs class name display issue:
+- Log raw graduated students sample
+- Log ALL graduation_class values with student names and data types
+- Log unique class IDs being fetched
+- Log classes returned from database  
+- Log any errors fetching classes
+- Log the final class map
+- Log sample transformed student
+
+This will help us identify:
+1. What values are actually stored in graduation_class field
+2. Whether it's a data type issue (UUID vs text)
+3. Whether the class IDs exist in the classes table
+4. Whether the mapping logic is working correctly
+
+Timestamp: 2025-12-08T00:10:00Z

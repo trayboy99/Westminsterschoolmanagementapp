@@ -1,0 +1,11 @@
+DEPLOYMENT TRIGGER: CASCADE DELETE FROM EXAM SCHEDULES
+
+Changes made:
+1. Updated single question delete endpoint to cascade delete from cbt_exam_questions table
+2. Updated question bank delete endpoint to cascade delete from cbt_exam_questions table
+3. Both deletions now remove questions from admin CBT exam schedules automatically
+4. Added logging for transparency
+5. Success messages now indicate if questions were removed from exam schedules
+
+This ensures data integrity - when teachers delete questions, they are automatically 
+removed from any admin-scheduled exams to prevent orphaned references.

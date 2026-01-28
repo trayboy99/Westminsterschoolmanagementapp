@@ -1,0 +1,16 @@
+DEPLOYMENT REQUIRED - Promotion & Session Settings Fix
+======================================================
+
+Critical fixes applied to resolve:
+1. Duplicate key constraint violation in promotions
+2. Session settings update authorization and error handling
+
+Changes made to index.tsx:
+- Fixed promotion session field extraction (line ~10102-10124)
+- Added duplicate check before promotion insert (line ~10201+)
+- Enhanced graduation handling with is_graduated flag (line ~10177+)
+- Added admin authorization to session settings endpoint (line ~19890+)
+- Improved error messages for session updates (lines ~19943, 19964, 20008, 20031)
+
+Deploy timestamp: 2024-12-08
+Priority: HIGH - Fixes critical production bug

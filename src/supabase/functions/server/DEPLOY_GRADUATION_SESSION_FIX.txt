@@ -1,0 +1,98 @@
+🎓 DEPLOY: Graduation Session Fix - CRITICAL BUG FIX
+
+═══════════════════════════════════════════════════════════════════
+
+PROBLEM IDENTIFIED:
+------------------
+When graduating students from their final year (e.g., SS3 in 2025/2026 session),
+the system was incorrectly recording the NEXT session (2026/2027) as their
+graduation session instead of the CURRENT session (2025/2026).
+
+EXAMPLE:
+- Student in SS3 during 2025/2026 session
+- Graduated in December 2025
+- ❌ OLD: Graduation Session = 2026/2027 (WRONG!)
+- ✅ NEW: Graduation Session = 2025/2026 (CORRECT!)
+
+ROOT CAUSE:
+-----------
+The backend code was fetching the session from the system settings table,
+which may have already been updated to the new session (2026/2027) even
+though students are graduating from the current session (2025/2026).
+
+OLD CODE (INCORRECT):
+```typescript
+const settingsJson = await kv.get("session_settings");
+if (settingsJson) {
+  const settings = JSON.parse(settingsJson);
+  sessionForGraduation = settings.current_session || sessionForGraduation;
+}
+```
+
+This caused the system to use whatever was in the settings, which could
+be the new session if settings were already updated.
+
+SOLUTION IMPLEMENTED:
+--------------------
+✅ Use the session values from the request body ONLY
+✅ Remove dependency on system settings for graduation session
+✅ Use current_session parameter sent from frontend (always correct)
+✅ Students now retain the session they actually graduated from
+
+NEW CODE (CORRECT):
+```typescript
+const sessionForGraduation = current_session || session;
+console.log(
+  "[Promotion] 📅 Using graduation session:",
+  sessionForGraduation,
+  "from request body (current_session or session parameter)",
+);
+```
+
+FRONTEND DATA FLOW:
+------------------
+Frontend sends:
+- current_session: "2025/2026" ← The active academic session
+- new_session: "2026/2027" ← The next session (for promoted students)
+- session: "2026/2027" ← Backward compatibility field
+
+Backend now uses:
+- For graduation: current_session (always the session they're completing)
+- For promotion: new_session (the session they're moving into)
+
+EXPECTED RESULT:
+---------------
+✅ Students graduating in 2025/2026 → graduation_session = "2025/2026"
+✅ Students graduating in 2024/2025 → graduation_session = "2024/2025"
+✅ Graduation session now accurately reflects when they completed their studies
+✅ Transcripts will show the correct graduation session
+
+TESTING INSTRUCTIONS:
+--------------------
+After deployment:
+1. Go to Promotion Management
+2. Select a senior class (e.g., SS3 - Silver)
+3. Click "Graduate" button
+4. Check Graduated Students List
+5. Verify "Graduation Session" matches the CURRENT session shown in UI
+6. Should NOT show next year's session
+
+MIGRATION NOTE:
+--------------
+Existing graduated students with incorrect sessions (showing 2026/2027 when
+they should be 2025/2026) will need manual correction in the database.
+
+Run this query to identify affected records:
+SELECT * FROM graduated_students 
+WHERE graduation_session = '2026/2027' 
+AND graduation_date < '2026-01-01'
+ORDER BY graduation_date DESC;
+
+These records should be updated to '2025/2026' if they graduated before
+the 2026/2027 session started.
+
+═══════════════════════════════════════════════════════════════════
+Deploy timestamp: 2025-12-08T00:35:00Z
+Status: READY FOR DEPLOYMENT - CRITICAL FIX
+Priority: HIGH - Affects academic records accuracy
+═══════════════════════════════════════════════════════════════════

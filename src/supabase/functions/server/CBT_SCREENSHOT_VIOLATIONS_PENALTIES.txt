@@ -1,0 +1,55 @@
+DEPLOYMENT TRIGGER: CBT SCREENSHOT VIOLATIONS WITH AUTOMATIC PENALTIES
+
+✅ IMPLEMENTED FEATURES:
+
+1. **Screenshot Capture on Violations:**
+   - Uses html2canvas library to capture exam page when violations occur
+   - Captures tab switches and fullscreen exits
+   - Screenshots are taken automatically without student interaction
+
+2. **Evidence Storage:**
+   - Screenshots uploaded to Supabase Storage bucket: 'make-1ddd013a-cbt-violations'
+   - Bucket created automatically with private access
+   - Signed URLs generated (valid for 1 year) for admin/teacher review
+   - Screenshot URLs stored in violation logs
+
+3. **Automatic Penalties:**
+   - Tab Switch (medium severity): -2 marks per violation
+   - Fullscreen Exit (high severity): -5 marks per violation
+   - Penalties deducted from total_score immediately
+   - Penalty marks tracked cumulatively in penalty_marks field
+   - Score never goes below 0
+
+4. **Violation Logging:**
+   - New endpoint: POST /cbt-student/log-violation-with-screenshot
+   - Handles FormData with screenshot file
+   - Stores violation type, severity, timestamp, screenshot URL
+   - Updates violation counts in cbt_student_attempts table
+
+5. **Student Notifications:**
+   - Enhanced toast messages showing violations are recorded
+   - Penalty notifications shown in real-time
+   - Warning badges in exam interface
+
+6. **Admin/Teacher Review:**
+   - Screenshot evidence saved for review
+   - Violation logs include all metadata
+   - Can view violations and screenshots from monitoring dashboard
+
+**PENALTY STRUCTURE:**
+- Tab Switch: -2 marks (medium severity)
+- Fullscreen Exit: -5 marks (high severity)
+- Penalties applied immediately during exam
+- Student notified of each penalty
+
+**DATA FLOW:**
+1. Student violates exam rules (tab switch/fullscreen exit)
+2. Frontend captures screenshot using html2canvas
+3. Screenshot + violation data sent to server
+4. Server uploads screenshot to Storage
+5. Server logs violation with screenshot URL
+6. Server calculates and applies penalty
+7. Server updates attempt with new score
+8. Student sees penalty notification
+
+This creates a robust anti-cheating system with evidence-based enforcement!

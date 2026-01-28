@@ -1,0 +1,11 @@
+Deploy trigger: 2025-01-27-AUTO-UNASSIGN-STUDENTS-ON-CLASS-DELETE
+
+CHANGES:
+- Modified DELETE /make-server-1ddd013a/classes/:id endpoint to automatically unassign students before deleting a class
+- Instead of blocking deletion when students are assigned, the system now sets their class_id to null
+- Added proper error handling for the unassignment operation
+- Maintains data integrity while providing better UX for administrators
+
+BEHAVIOR:
+Before: Cannot delete class: X student(s) are still assigned (blocks deletion)
+After: Automatically unassigns students, then deletes the class successfully

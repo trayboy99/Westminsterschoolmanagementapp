@@ -1,0 +1,7 @@
+OLD LINE 809:
+      text = text.replace(/([a-z0-9,;:.!?\\)\\]\\}])([A-H])\\./gi, '$1 $2.');
+
+NEW LINE 809:
+      // FIX: Only split if preceded by punctuation/brackets/digits, NOT letters
+      // This prevents "table A." from becoming "tabl e A."
+      text = text.replace(/([,;:.!?)\]}\d])(\s*)([A-H]\.)/g, '$1\n$3');

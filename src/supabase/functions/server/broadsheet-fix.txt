@@ -1,0 +1,144 @@
+    console.log(`[Teacher Broadsheet] Found ${assignments?.length || 0} assignments`);
+
+    // Group by class + subject combination (each subject gets its own broadsheet)
+    // This prevents confusion when a teacher teaches multiple subjects in the same class
+    const broadsheetSections = [];
+    
+    (assignments || []).forEach((assignment: any) => {
+      const classId = assignment.class_id;
+      const subjectId = assignment.subject_id;
+      const className = assignment.classes?.name || 'Unknown Class';
+      const subjectName = assignment.subjects?.name || 'Unknown Subject';
+      
+      // Each class+subject combination is a separate broadsheet section
+      broadsheetSections.push({
+        classId,
+        className,
+        subjectId,
+        subjectName,
+      });
+    });
+
+    console.log(`[Teacher Broadsheet] Created ${broadsheetSections.length} broadsheet sections (class+subject combinations)`);
+
+    // Build broadsheet for each class + subject combination
+    const broadsheet = [];
+    
+    for (const section of broadsheetSections) {
+      console.log(`[Teacher Broadsheet] Processing ${section.className} - ${section.subjectName}`);
+
+      // Get students assigned to this specific subject in this class
+      const { data: studentSubjects, error: studentSubjectsError } = await supabase
+        .from("student_subjects")
+        .select("student_id")
+        .eq("class_id", section.classId)
+        .eq("subject_id", section.subjectId)
+        .eq("status", "active");
+
+      if (studentSubjectsError) {
+        console.error(`[Teacher Broadsheet] Error fetching student subjects:`, studentSubjectsError);
+        continue;
+      }
+
+      // Get unique student IDs
+      const uniqueStudentIds = [...new Set(studentSubjects?.map((ss: any) => ss.student_id) || [])];
+
+      if (uniqueStudentIds.length === 0) {
+        console.log(`[Teacher Broadsheet] No students assigned to ${section.subjectName} in ${section.className}`);
+        // Still add the section but with empty students array
+        broadsheet.push({
+          classId: section.classId,
+          className: section.className,
+          subjectId: section.subjectId,
+          subjectName: section.subjectName,
+          students: [],
+        });
+        continue;
+      }
+
+      console.log(`[Teacher Broadsheet] Found ${uniqueStudentIds.length} students for ${section.subjectName}`);
+
+      // Now get student details for these IDs
+      const { data: students, error: studentsError } = await supabase
+        .from("profiles")
+        .select("id, first_name, middle_name, last_name")
+        .in("id", uniqueStudentIds)
+        .eq("role", "student")
+        .or("is_graduated.is.null,is_graduated.eq.false")
+        .order("last_name", { ascending: true })
+        .order("first_name", { ascending: true });
+
+      if (studentsError) {
+        console.error(`[Teacher Broadsheet] Error fetching students:`, studentsError);
+        continue;
+      }
+
+      console.log(`[Teacher Broadsheet] Found ${students?.length || 0} student profiles`);
+
+      // For each student, get marks for THIS subject only
+      const studentsWithMarks = [];
+      
+      for (const student of students || []) {
+        const studentName = `${student.first_name} ${student.middle_name || ''} ${student.last_name}`.trim();
+
+        // Fetch marks for this student + subject + session + term + exam + type
+        const { data: marks } = await supabase
+          .from("marks")
+          .select("*")
+          .eq("student_id", student.id)
+          .eq("subject_id", section.subjectId)
+          .eq("session", session)
+          .eq("term", term)
+          .eq("exam", exam)
+          .limit(1)
+          .maybeSingle();
+
+        let ca1 = null;
+        let ca2 = null;
+        let examMark = null;
+        let total = null;
+
+        if (marks) {
+          if (type === 'midterm') {
+            ca1 = marks.midterm_ca1;
+            ca2 = marks.midterm_ca2;
+            examMark = marks.midterm_exam;
+            
+            // Calculate total
+            const scores = [ca1, ca2, examMark].filter(v => v !== null);
+            if (scores.length > 0) {
+              total = scores.reduce((sum, v) => sum + v, 0);
+            }
+          } else if (type === 'terminal') {
+            ca1 = marks.terminal_ca1;
+            ca2 = marks.terminal_ca2;
+            examMark = marks.terminal_exam;
+            
+            // Calculate total
+            const scores = [ca1, ca2, examMark].filter(v => v !== null);
+            if (scores.length > 0) {
+              total = scores.reduce((sum, v) => sum + v, 0);
+            }
+          }
+        }
+
+        studentsWithMarks.push({
+          studentId: student.id,
+          studentName,
+          ca1,
+          ca2,
+          exam: examMark,
+          total,
+        });
+      }
+
+      broadsheet.push({
+        classId: section.classId,
+        className: section.className,
+        subjectId: section.subjectId,
+        subjectName: section.subjectName,
+        students: studentsWithMarks,
+      });
+    }
+
+    console.log(`[Teacher Broadsheet] ✅ Generated broadsheet for ${broadsheet.length} sections`);

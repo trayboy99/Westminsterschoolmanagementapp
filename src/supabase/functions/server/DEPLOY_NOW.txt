@@ -1,0 +1,8 @@
+DEPLOY TIMESTAMP: 2025-12-02 - SHOW ALL CBT RESULTS
+
+Changes made:
+- Simplified cbt-teacher.tsx to show ALL student attempts
+- Removed complex subject_assignments filtering
+- Now returns all CBT results grouped by class + subject for current session/term
+
+This file change should trigger an Edge Function redeployment.

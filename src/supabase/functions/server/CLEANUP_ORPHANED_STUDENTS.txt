@@ -1,0 +1,49 @@
+🧹 ORPHANED STUDENT CLEANUP FEATURE
+
+Added a new database cleanup system to fix the marks completion percentage issue:
+
+## The Problem:
+- Student_subjects table contained records for students who were deleted or graduated
+- This caused incorrect student counts (e.g., 2 students counted when only 1 exists)
+- Marks completion showed 50% instead of 100% because of orphaned records
+
+## The Solution:
+1. Added `/cleanup-orphaned-assignments` endpoint to remove student_subjects records where the student (profile) no longer exists
+2. Added "🧹 Cleanup Database" button in Result Publishing UI
+3. Button appears when marks are incomplete, suggesting orphaned records might exist
+
+## How It Works:
+- Admin clicks "Cleanup Database" button
+- System checks all student_subjects records
+- Finds records where student_id doesn't exist in profiles table
+- Deletes those orphaned records
+- Updates marks completion percentages automatically
+
+## Files Changed:
+- /supabase/functions/server/index.tsx - Added cleanup endpoint
+- /components/results/ResultPublishingSettings.tsx - Added cleanup button
+
+## Access Control:
+- Allowed roles: admin, principal_admin, it_admin
+- Any of these roles can run the cleanup
+
+## Comprehensive Cleanup Checks:
+1. **Deleted Students** - Profile no longer exists in profiles table
+2. **Graduated Students** - Student exists in graduated_students table
+3. **Promoted/Moved Students** - Student's current class_id doesn't match student_subjects.class_id
+4. **Role Changed** - User is no longer a student (role changed)
+
+## Returns:
+- deleted_count: Number of orphaned records deleted
+- breakdown: Count by reason (Promoted/Moved, Graduated, Deleted, Role Changed)
+
+## AUTOMATIC CLEANUP:
+The system now automatically cleans up student_subjects in these scenarios:
+1. **Student Promotion** - Deletes old class assignments when students are promoted
+2. **Student Graduation** - Deletes all assignments when students graduate
+3. **Student Deletion** - Cascade deletes assignments when user is deleted
+4. **Manual Cleanup** - Admins can run the cleanup endpoint anytime
+
+This ensures student_subjects always reflects current reality!
+
+Deploy: 2025-01-16-AUTO-CLEANUP-V5

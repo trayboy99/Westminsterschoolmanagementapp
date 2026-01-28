@@ -1,0 +1,86 @@
+REDEPLOY TRIGGER: 2025-12-03 01:45 UTC
+
+✅ CRITICAL FIX: Teacher "View Answers" - Column Does Not Exist
+
+═══════════════════════════════════════════════════════════════
+
+ERROR FIXED:
+❌ column cbt_student_answers.points_earned does not exist
+Teachers couldn't see student CBT answers due to database schema mismatch
+
+ROOT CAUSE:
+Backend was querying for `points_earned` column that doesn't exist
+in the cbt_student_answers table.
+
+ACTUAL COLUMNS in cbt_student_answers:
+✅ id
+✅ attempt_id
+✅ question_id
+✅ student_answer
+✅ is_correct
+✅ created_at
+❌ points_earned (DOES NOT EXIST!)
+
+SOLUTION APPLIED:
+1. Removed `points_earned` from SELECT query
+2. Calculate points_earned on-the-fly:
+   - If is_correct = true → points = question.marks
+   - If is_correct = false → points = 0
+
+```typescript
+// ❌ BEFORE: Querying non-existent column
+.select(`
+  question_id,
+  student_answer,
+  is_correct,
+  points_earned  // ← DOESN'T EXIST!
+`)
+
+// ✅ AFTER: Query only existing columns
+.select(`
+  question_id,
+  student_answer,
+  is_correct
+`)
+
+// Calculate points earned dynamically
+const pointsEarned = answer.is_correct ? question.marks : 0;
+```
+
+═══════════════════════════════════════════════════════════════
+
+COMPLETE FLOW NOW WORKS:
+
+1️⃣ Get attempt (exam info, scores)
+2️⃣ Get student profile (name)
+3️⃣ Get answers (question_id, student_answer, is_correct)
+4️⃣ Get questions (text, type, marks, correct_answer, options)
+5️⃣ Map together + calculate points_earned
+6️⃣ Return formatted data to frontend
+
+WHAT'S FIXED:
+✅ Teacher Dashboard → "View Answers" works
+✅ No more "column does not exist" error
+✅ Student answers display correctly
+✅ Correct answers display correctly
+✅ Options show as A, B, C, D (from previous fix)
+✅ Points earned calculated correctly
+✅ Green ✓ for correct answers
+✅ Red ✗ for incorrect answers
+
+FILES CHANGED:
+- /supabase/functions/server/cbt-teacher.tsx
+  - Removed points_earned from SELECT query
+  - Added dynamic calculation: pointsEarned = is_correct ? marks : 0
+  - Better logging for debugging
+
+EXPECTED RESULT AFTER DEPLOY:
+Teacher clicks "View Answers" → sees:
+  📝 Question text
+  🔤 Options (A, B, C, D)
+  ✏️ Student's answer
+  ✅ Correct answer (highlighted green)
+  ✓ / ✗ Marking (correct/incorrect)
+  🎯 Points earned
+
+🚀 REDEPLOY REQUIRED - CRITICAL DATABASE SCHEMA FIX! 🎯

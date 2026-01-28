@@ -1,0 +1,20 @@
+Deploy graduated students UUID vs class name fix
+
+ISSUE IDENTIFIED:
+The graduated_students table contains mixed data:
+- Some records have class UUID (e.g., "0ebd4592-0ebe-426d-943f-d0f9acab38ec")
+- Some records have class name directly (e.g., "SS3")
+
+This caused error: "invalid input syntax for type uuid: SS3" when trying to query the classes table with class names.
+
+SOLUTION IMPLEMENTED:
+1. Added UUID detection function using regex pattern
+2. Separate graduation_class values into two groups:
+   - UUIDs → fetch corresponding names from classes table
+   - Plain text names → use directly (legacy data)
+3. Build combined class map from both sources
+4. No more UUID parsing errors
+
+This handles both legacy data (with class names) and new data (with class UUIDs) correctly.
+
+Deploy timestamp: 2025-12-08T00:20:00Z

@@ -1,0 +1,19 @@
+CBT BASE CLASS NAME FIX
+========================
+
+Date: 2025-12-08
+
+Changes:
+1. Added extractBaseClassName() helper function to cbt-questions.tsx
+2. Added extractBaseClassName() helper function to cbt-student.tsx
+3. Updated frontend CreateQuestionModal to extract base class names
+4. Class dropdown now shows: JSS2, SS1, SS3 (not "Junior" or "Senior")
+5. Questions stored with base class name only
+6. Students in any section see questions for their base class
+
+Example:
+- Database: "SS1 - Diamond", "SS1 - Silver", "jss2"
+- Extract: "SS1", "SS1", "JSS2"
+- Dropdown shows: "SS1", "JSS2"
+- Questions created for: "SS1" (not "SS1 - Diamond")
+- Student in "SS1 - Silver" sees "SS1" questions ✅

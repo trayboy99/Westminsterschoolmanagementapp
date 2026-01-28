@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix Attendance ON CONFLICT Error</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 800px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            color: #1a202c;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+        .error {
+            background: #fee;
+            border-left: 4px solid #f44;
+            padding: 16px;
+            margin: 20px 0;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .steps {
+            margin: 30px 0;
+        }
+        .step {
+            background: #f7fafc;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .step-number {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 32px;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        .sql-box {
+            background: #1a202c;
+            color: #a0aec0;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            position: relative;
+        }
+        .sql-box pre {
+            margin: 0;
+            color: #63b3ed;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.2s;
+        }
+        .copy-btn:hover {
+            background: #5568d3;
+        }
+        .copy-btn.copied {
+            background: #48bb78;
+        }
+        .success {
+            background: #efe;
+            border-left: 4px solid #4a4;
+            padding: 16px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .warning {
+            background: #fef3cd;
+            border-left: 4px solid #ff9800;
+            padding: 16px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Fix Attendance ON CONFLICT Error</h1>
+        <p style="color: #718096; margin-bottom: 20px;">Quick 3-step fix for your School Management System</p>
+
+        <div class="error">
+            <strong>❌ Error:</strong> there is no unique or exclusion constraint matching the ON CONFLICT specification
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Problem:</strong> Your attendance table is missing a UNIQUE constraint on (student_id, date). The backend needs this to prevent duplicate records.
+        </div>
+
+        <div class="steps">
+            <div class="step">
+                <span class="step-number">1</span>
+                <strong>Open Supabase SQL Editor</strong>
+                <p style="margin-top: 10px; color: #4a5568;">
+                    Go to your Supabase Dashboard → Click "SQL Editor" (left sidebar) → Click "New Query"
+                </p>
+            </div>
+
+            <div class="step">
+                <span class="step-number">2</span>
+                <strong>Copy and Paste This SQL</strong>
+                <div class="sql-box">
+                    <button class="copy-btn" onclick="copySQL()">Copy SQL</button>
+                    <pre id="sqlCode">-- Remove any existing duplicates
+DELETE FROM attendance a
+USING attendance b
+WHERE a.student_id = b.student_id
+  AND a.date = b.date
+  AND a.id < b.id;
+
+-- Add the unique constraint
+ALTER TABLE attendance 
+ADD CONSTRAINT attendance_student_date_unique 
+UNIQUE (student_id, date);
+
+-- Verify it worked
+SELECT constraint_name, constraint_type
+FROM information_schema.table_constraints
+WHERE table_name = 'attendance'
+AND constraint_name = 'attendance_student_date_unique';</pre>
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">3</span>
+                <strong>Click "RUN" (or press Cmd/Ctrl + Enter)</strong>
+                <p style="margin-top: 10px; color: #4a5568;">
+                    You should see a result showing the constraint was created.
+                </p>
+            </div>
+        </div>
+
+        <div class="success">
+            <strong>✅ After running the SQL:</strong>
+            <ol style="margin-left: 20px; margin-top: 10px;">
+                <li>Refresh your browser (F5)</li>
+                <li>Go to Attendance Marking</li>
+                <li>Mark some students</li>
+                <li>Click "Save Attendance"</li>
+                <li>See success message! 🎉</li>
+            </ol>
+        </div>
+
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e2e8f0; color: #718096; font-size: 14px;">
+            <strong>What this does:</strong> Ensures each student can only have one attendance record per day. If you mark attendance twice, it updates instead of creating duplicates.
+        </div>
+    </div>
+
+    <script>
+        function copySQL() {
+            const sqlCode = document.getElementById('sqlCode').textContent;
+            navigator.clipboard.writeText(sqlCode).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                btn.textContent = 'Copied! ✓';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = 'Copy SQL';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

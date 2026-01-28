@@ -1,0 +1,7 @@
+// Test: Here's the problematic regex line
+text = text.replace(/([a-z0-9,;:.!?\)\]\}])([A-H])\./gi, '$1 $2.');
+
+// FIXED VERSION - Only split if NOT preceded by a letter
+// This prevents "table A." from becoming "tabl e A."
+text = text.replace(/([,;:.!?\)\]\}\d])(\s*)([A-H]\.)/g, '$1\n$3');
+text = text.replace(/\s+([A-H]\.)/g, '\n$1');
